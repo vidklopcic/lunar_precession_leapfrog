@@ -1,20 +1,22 @@
-import numpy as np
+import os
+import shutil
+from datetime import datetime
 
-# podatki
-from scipy.integrate import odeint
-import matplotlib.pyplot as plt
+import numpy as np
+from params import *
 
 na = np.array
 YEAR_S = 31557600
 
 
 class Body:
-    def __init__(self, r: np.array, v: np.array, mass: float, name: str):
+    def __init__(self, r: np.array, v: np.array, mass: float, name: str, fixed: bool=False):
         self.r = r
         self.v = v
         self.mass = mass
         self.ndim = len(r)
         self.name = name
+        self.fixed = fixed
 
         self.v_steps = []
         self.r_steps = []
@@ -64,12 +66,14 @@ class Leapfrog:
 
     def update_half_v(self):
         for body in self.gravity.bodies:
+            if body.fixed: continue
             force_sum = self.get_force_sum(body)
             a = force_sum / body.mass
             body.v += a * self.step / 2
 
     def update_r(self):
         for body in self.gravity.bodies:
+            if body.fixed: continue
             body.r += body.v * self.step
 
     def get_force_sum(self, body):
@@ -87,38 +91,32 @@ class Leapfrog:
             self.gravity.record_step()
 
 
-m_s = 1.989e30
-m_z = 5.9722e24
-m_l = 7.3477e22
-d_zl_max = 405696e3
-d_zs = 149597870e3
-v_zl_min = 970
-v_zs = 29788.6204
-omega_zs = 29788.6204 / d_zs
-angle_ekliptika = 0.08988446
-omega_zemlja_sonce = v_zs / d_zs
+omega_zs = v_zs_min / d_zs_max
 
 # define bodies
-sonce = Body(na([0., 0., 0.]), na([0., 0., 0.]), m_s, 'sonce')
-zemlja = Body(na([d_zs, 0., 0.]), na([0., v_zs, 0.]), m_z, 'zemlja')
-luna = Body(na([d_zs + d_zl_max, 0., d_zl_max * np.sin(angle_ekliptika)]),
-            na([0., omega_zs * (d_zs + d_zl_max) + v_zl_min, 0.]), m_l, 'luna')
+sonce = Body(na([0., 0., 0.]), na([0., -9.09e-2, 0.]), m_s, 'sonce', fixed=True)
+zemlja = Body(na([d_zs_max, 0., 0.]), na([0., v_zs_min, 0.]), m_z, 'zemlja')
+luna = Body(na([d_zs_max + d_zl_max, 0., d_zl_max * np.sin(angle_ekliptika)]),
+            na([0., omega_zs * (d_zs_max + d_zl_max) + v_zl_min, 0.]), m_l, 'luna')
 
-system = GravitySystem()
+system = GravitySystem(step_resolution=1)
 sonce_i = system.add_body(sonce)
 zemlja_i = system.add_body(zemlja)
 luna_i = system.add_body(luna)
 
-time = 365 * 24 * 60 * 60
-dt = 60
-solver = Leapfrog(step=dt, n_steps=int(time / dt), gravity=system)
+solver = Leapfrog(step=timestep, n_steps=int(period / timestep) + 1, gravity=system)
 solver.calculate()
 
-r_zemja = np.array(system.bodies[zemlja_i].r_steps).T
-r_luna = np.array(system.bodies[luna_i].r_steps).T
+r_zemja = np.array(system.bodies[zemlja_i].r_steps)
+r_luna = np.array(system.bodies[luna_i].r_steps)
+r_sonce = np.array(system.bodies[sonce_i].r_steps)
 
-plt.xlabel("x")
-plt.ylabel("y")
-plt.plot(r_zemja[0], r_zemja[1], color='b', label='zemlja')
-plt.plot(r_luna[0], r_luna[1], color='g', label='luna')
-plt.show()
+dir = datetime.now().strftime('%Y_%m_%d_%H_%M_%S ') + name
+os.makedirs(dir)
+shutil.copy('params.py', dir)
+shutil.copy('simulation.py', dir)
+os.chdir(dir)
+
+np.savetxt('zemlja.txt', r_zemja)
+np.savetxt('luna.txt', r_luna)
+np.savetxt('sonce.txt', r_sonce)
