@@ -4,7 +4,7 @@ from math import atan2
 import matplotlib.pyplot as plt
 import numpy as np
 
-step_s = 60 * 60 * 12
+step_s = 60 * 60 * 4
 step_d = step_s / (24 * 60 * 60)
 step_m = step_s / (24 * 60 * 60 * 30)
 step_y = step_s / (24 * 60 * 60 * 365)
@@ -143,7 +143,7 @@ class GravityPlot:
         Kot med zveznico presecisc lunine orbite s ploskvijo zemljine orbite in zveznico med enakonocji.
         '''
 
-        plt.title('Kot med glavno osjo orbite Lune in zveznico med enakonočji')
+        plt.title('Kot glavne osi orbite lune glede na začetno pozicijo')
         ref_v = np.array([1, 0])
         data = []
         nodes = []
@@ -164,11 +164,13 @@ class GravityPlot:
                 decreasing = True
             min_d = dlz
 
-        for node in nodes:
+        for node in nodes[1:]:
             dir_v = node[:2] / np.linalg.norm(node[:2])
             data.append(np.arccos(np.dot(dir_v, ref_v)))
 
-        plt.plot(np.linspace(0, step_y * len(self.zemlja_d), num=len(data)), data, label='kot')
+        plt.xlabel('t [leto]')
+        plt.ylabel('kot [rad]')
+        plt.plot(np.linspace(0, step_y * len(self.zemlja_d), num=len(data)), data, label='kot', color='b')
 
     def plot_luna_eq_orbit(self):
         l = self.luna_orbit.T
@@ -196,10 +198,11 @@ def plot_dirs():
 gplot = GravityPlot()
 
 for dir in plot_dirs():
-    gplot.load_data(dir, n_steps=int(9/step_y))
+    gplot.load_data(dir, n_steps=int(10/step_y))
     # plt.gca().set_aspect('equal', adjustable='box')
+    # gplot.g_plot_luna_orbit()
     gplot.plot_major_axis_angle()
     plt.legend()
-    plt.show()
-    # plt.savefig(dir + '/kot_zemlja_sonce_luna.pdf')
+    # plt.show()
+    plt.savefig(dir + '/kot_glavne_osi_lune.pdf')
     if plot == PLOT_LAST: break

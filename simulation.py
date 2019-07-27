@@ -91,13 +91,10 @@ class Leapfrog:
             self.gravity.record_step()
 
 
-omega_zs = v_zs_min / d_zs_max
-
 # define bodies
-sonce = Body(na([0., 0., 0.]), na([0., -9.09e-2, 0.]), m_s, 'sonce', fixed=True)
-zemlja = Body(na([d_zs_max, 0., 0.]), na([0., v_zs_min, 0.]), m_z, 'zemlja')
-luna = Body(na([d_zs_max + d_zl_max, 0., d_zl_max * np.sin(angle_ekliptika)]),
-            na([0., omega_zs * (d_zs_max + d_zl_max) + v_zl_min, 0.]), m_l, 'luna')
+sonce = Body(na([0., 0., 0.]), na([0., 0., 0.]), m_s, 'sonce', fixed=True)
+zemlja = Body(na(xz), na(vz), m_z, 'zemlja')
+luna = Body(na(xl), na(vl), m_l, 'luna')
 
 system = GravitySystem(step_resolution=1)
 sonce_i = system.add_body(sonce)
