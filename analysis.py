@@ -9,6 +9,7 @@ step_d = step_s / (24 * 60 * 60)
 step_m = step_s / (24 * 60 * 60 * 30)
 step_y = step_s / (24 * 60 * 60 * 365)
 
+au = 149597870700
 
 class GravityPlot:
     def __init__(self):
@@ -63,20 +64,19 @@ class GravityPlot:
         plt.gca().set_aspect('equal', adjustable='box')
         self.plot_planet(color='b', label='zemlja')
         self.plot_luna_orbit()
-        plt.legend()
 
     def g_plot_luna_eq_orbit(self):
         plt.gca().set_aspect('equal', adjustable='box')
-        self.plot_planet(color='b', label='zemlja')
         self.plot_luna_eq_orbit()
-        plt.legend()
+        self.plot_planet(color='b', label='zemlja')
+        plt.ylabel('y [m]')
+        plt.xlabel('x [m]')
 
     def g_plot_orbit(self):
         plt.gca().set_aspect('equal', adjustable='box')
         self.plot_planet(color='orange', label='sonce')
         self.plot_zemlja()
         self.plot_luna()
-        plt.legend()
 
     def plot_luna_orbit(self):
         l = self.luna_orbit.T
@@ -145,6 +145,8 @@ class GravityPlot:
 
         plt.title('Kot glavne osi orbite lune glede na začetno pozicijo')
         ref_v = np.array([1, 0])
+        oribt = []
+        orbits = []
         data = []
         nodes = []
         min_d = 0
@@ -160,6 +162,7 @@ class GravityPlot:
             elif dlz < min_d:
                 if increasing:
                     nodes.append(self.luna_d[i]-self.zemlja_d[i])
+                    orbits.append(i)
                 increasing = False
                 decreasing = True
             min_d = dlz
@@ -174,7 +177,8 @@ class GravityPlot:
 
     def plot_luna_eq_orbit(self):
         l = self.luna_orbit.T
-        plt.plot(l[0], l[2], color='g', linewidth=0.3, label='luna')
+        plt.axes().set_ylim([-3e8, 3e8])
+        plt.plot(l[0], l[2], color='g', linewidth=0.1, label='luna')
 
     def plot_all(self):
         self.g_plot_orbit()
@@ -198,11 +202,11 @@ def plot_dirs():
 gplot = GravityPlot()
 
 for dir in plot_dirs():
-    gplot.load_data(dir, n_steps=int(10/step_y))
-    # plt.gca().set_aspect('equal', adjustable='box')
-    # gplot.g_plot_luna_orbit()
-    gplot.plot_major_axis_angle()
-    plt.legend()
+    gplot.load_data(dir, n_steps=int(18/step_y))
+    plt.gca().set_aspect('equal', adjustable='box')
+    gplot.g_plot_luna_eq_orbit()
+    # gplot.plot_major_axis_angle()
+    # plt.legend()
     # plt.show()
-    plt.savefig(dir + '/kot_glavne_osi_lune.pdf')
+    plt.savefig(dir + '/orbita_eq.pdf')
     if plot == PLOT_LAST: break
