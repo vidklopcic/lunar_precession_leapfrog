@@ -55,7 +55,8 @@ class GravitySystem:
         if self.step_n % self.step_resolution != 0: return
         for body in self.bodies:
             body.record_step()
-        print('step %d' % self.step_n)
+        if self.step_n % 1000 == 0:
+            print('step %d' % self.step_n)
 
 
 class Leapfrog:
